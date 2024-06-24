@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.boot.actuate.autoconfigure.web.jersey;
 
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.springframework.boot.autoconfigure.AutoConfigurations;
-import org.springframework.boot.autoconfigure.jersey.ResourceConfigCustomizer;
 import org.springframework.boot.autoconfigure.web.servlet.DefaultJerseyApplicationPath;
 import org.springframework.boot.autoconfigure.web.servlet.JerseyApplicationPath;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner;
-import org.springframework.boot.testsupport.runner.classpath.ClassPathExclusions;
-import org.springframework.boot.testsupport.runner.classpath.ModifiedClassPathExtension;
+import org.springframework.boot.testsupport.classpath.ClassPathExclusions;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -42,7 +40,6 @@ import static org.mockito.Mockito.verify;
  *
  * @author Madhura Bhave
  */
-@ExtendWith(ModifiedClassPathExtension.class)
 @ClassPathExclusions("spring-webmvc-*")
 class JerseySameManagementContextConfigurationTests {
 
@@ -61,16 +58,6 @@ class JerseySameManagementContextConfigurationTests {
 	void autoConfigurationIsConditionalOnClassResourceConfig() {
 		this.contextRunner.withClassLoader(new FilteredClassLoader(ResourceConfig.class))
 				.run((context) -> assertThat(context).doesNotHaveBean(JerseySameManagementContextConfiguration.class));
-	}
-
-	@Test
-	void resourceConfigIsCustomizedWithResourceConfigCustomizerBean() {
-		this.contextRunner.withUserConfiguration(CustomizerConfiguration.class).run((context) -> {
-			assertThat(context).hasSingleBean(ResourceConfig.class);
-			ResourceConfig config = context.getBean(ResourceConfig.class);
-			ResourceConfigCustomizer customizer = context.getBean(ResourceConfigCustomizer.class);
-			verify(customizer).customize(config);
-		});
 	}
 
 	@Test
@@ -105,6 +92,17 @@ class JerseySameManagementContextConfigurationTests {
 		});
 	}
 
+	@Test
+	void resourceConfigIsCustomizedWithResourceConfigCustomizerBean() {
+		this.contextRunner.withUserConfiguration(CustomizerConfiguration.class).run((context) -> {
+			assertThat(context).hasSingleBean(ResourceConfig.class);
+			ResourceConfig config = context.getBean(ResourceConfig.class);
+			ManagementContextResourceConfigCustomizer customizer = context
+					.getBean(ManagementContextResourceConfigCustomizer.class);
+			verify(customizer).customize(config);
+		});
+	}
+
 	@Configuration(proxyBeanMethods = false)
 	static class ConfigWithJerseyApplicationPath {
 
@@ -129,8 +127,8 @@ class JerseySameManagementContextConfigurationTests {
 	static class CustomizerConfiguration {
 
 		@Bean
-		ResourceConfigCustomizer resourceConfigCustomizer() {
-			return mock(ResourceConfigCustomizer.class);
+		ManagementContextResourceConfigCustomizer resourceConfigCustomizer() {
+			return mock(ManagementContextResourceConfigCustomizer.class);
 		}
 
 	}

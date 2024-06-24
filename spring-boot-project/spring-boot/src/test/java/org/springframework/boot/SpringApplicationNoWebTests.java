@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,10 +17,8 @@
 package org.springframework.boot;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 
-import org.springframework.boot.testsupport.runner.classpath.ClassPathExclusions;
-import org.springframework.boot.testsupport.runner.classpath.ModifiedClassPathExtension;
+import org.springframework.boot.testsupport.classpath.ClassPathExclusions;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.StaticApplicationContext;
@@ -32,7 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * @author Stephane Nicoll
  */
-@ExtendWith(ModifiedClassPathExtension.class)
 @ClassPathExclusions("spring-web*.jar")
 class SpringApplicationNoWebTests {
 
@@ -45,7 +42,8 @@ class SpringApplicationNoWebTests {
 	@Test
 	void specificApplicationContextClass() {
 		SpringApplication application = new SpringApplication(ExampleConfig.class);
-		application.setApplicationContextClass(StaticApplicationContext.class);
+		application
+				.setApplicationContextFactory(ApplicationContextFactory.ofContextClass(StaticApplicationContext.class));
 		ConfigurableApplicationContext context = application.run();
 		assertThat(context).isInstanceOf(StaticApplicationContext.class);
 		context.close();
